@@ -3,7 +3,7 @@
 d3.csv('https://raw.githubusercontent.com/nithiyasuresh/LifeExpectancy_Project/nithiyaBranch/pet_pals/data/Life.csv').then(function (data) {
     console.log(data);
     // Create a lookup table to sort and regroup the columns of data,
-        // first by Year, then by region:
+    // first by Year, then by region:
     var lookup = {};
     function getData(Year, region) {
         var byYear, trace;
@@ -15,6 +15,8 @@ d3.csv('https://raw.githubusercontent.com/nithiyasuresh/LifeExpectancy_Project/n
         // then create one:
         if (!(trace = byYear[region])) {
             trace = byYear[region] = {
+                yr:[],
+                rgn:[],
                 x: [],
                 y: [],
                 id: [],
@@ -22,146 +24,228 @@ d3.csv('https://raw.githubusercontent.com/nithiyasuresh/LifeExpectancy_Project/n
                 marker: { size: [] }
             };
         }
+        console.log(trace);
         return trace;
     }
 
-        // Go through each row, get the right trace, and append the data:
-        for (var i = 0; i < data.length; i++) {
-            var datum = data[i];
-            var trace = getData(datum.Year, datum.region);
-            trace.text.push(datum.country);
-            trace.id.push(datum.country);
-            trace.x.push(datum.Life_Expectancy);
-            trace.y.push(datum.GDP);
-            trace.marker.size.push(datum.Population);
-        }
+    // Go through each row, get the right trace, and append the data:
+    for (var i = 0; i < data.length; i++) {
+        var datum = data[i];
+        var trace = getData(datum.Year, datum.region);
+        trace.yr.push(datum.Year);
+        trace.rgn.push(datum.region);
+        trace.text.push(datum.Country);
+        trace.id.push(datum.Country);
+        trace.x.push(datum.Life_Expectancy);
+        trace.y.push(datum.GDP);
+        trace.marker.size.push(datum.Population);
+    }
 
-        // Get the group names:
-        var Years = Object.keys(lookup);
-        // In this case, every Year includes every region, so we
-        // can just infer the regions from the *first* Year:
-        var firstYear = lookup[Years[0]];
-        var regions = Object.keys(firstYear);
+    // Get the group names:
+    var Years = Object.keys(lookup);
+    // In this case, every Year includes every region, so we
+    // can just infer the regions from the *first* Year:
+    var firstYear = lookup[Years[0]];
+    var regions = Object.keys(firstYear);
 
-        // Create the main traces, one for each region:
-        var traces = [];
-        for (i = 0; i < regions.length; i++) {
-            var data = firstYear[regions[i]];
-            // One small note. We're creating a single trace here, to which
-            // the frames will pass data for the different Years. It's
-            // subtle, but to avoid data reference problems, we'll slice 
-            // the arrays to ensure we never write any new data into our
-            // lookup table:
-            traces.push({
-                name: regions[i],
-                x: data.x.slice(),
-                y: data.y.slice(),
-                id: data.id.slice(),
-                text: data.text.slice(),
-                mode: 'markers',
-                marker: {
-                    size: data.marker.size.slice(),
-                    sizemode: 'area',
-                    sizeref: 200000
-                }
-            });
-        }
-
-        // Create a frame for each Year. Frames are effectively just
-        // traces, except they don't need to contain the *full* trace
-        // definition (for example, appearance). The frames just need
-        // the parts the traces that change (here, the data).
-        var frames = [];
-        for (i = 0; i < Years.length; i++) {
-            frames.push({
-                name: Years[i],
-                data: regions.map(function (region) {
-                    return getData(Years[i], region);
-                })
-            });
-        }
-
-        // Now create slider steps, one for each frame. The slider
-        // executes a plotly.js API command (here, Plotly.animate).
-        // In this example, we'll animate to one of the named frames
-        // created in the above loop.
-        var sliderSteps = [];
-        for (i = 0; i < Years.length; i++) {
-            sliderSteps.push({
-                method: 'animate',
-                label: Years[i],
-                args: [[Years[i]], {
-                    mode: 'immediate',
-                    transition: { duration: 300 },
-                    frame: { duration: 300, redraw: false },
-                }]
-            });
-        }
-
-        var layout = {
-            xaxis: {
-                title: 'Life Expectancy',
-                range: [30, 85]
-            },
-            yaxis: {
-                title: 'GDP per Capita',
-                type: 'log'
-            },
-            hovermode: 'closest',
-    //         // We'll use updatemenus (whose functionality includes menus as
-    //         // well as buttons) to create a play button and a pause button.
-    //         // The play button works by passing `null`, which indicates that
-    //         // Plotly should animate all frames. The pause button works by
-    //         // passing `[null]`, which indicates we'd like to interrupt any
-    //         // currently running animations with a new list of frames. Here
-    //         // The new list of frames is empty, so it halts the animation.
-            updatemenus: [{
-                x: 0,
-                y: 0,
-                yanchor: 'top',
-                xanchor: 'left',
-                showactive: false,
-                direction: 'left',
-                type: 'buttons',
-                pad: { t: 87, r: 10 },
-                buttons: [{
-                    method: 'animate',
-                    args: [null, {
-                        mode: 'immediate',
-                        fromcurrent: true,
-                        transition: { duration: 300 },
-                        frame: { duration: 500, redraw: false }
-                    }],
-                    label: 'Play'
-                }, {
-                    method: 'animate',
-                    args: [[null], {
-                        mode: 'immediate',
-                        transition: { duration: 0 },
-                        frame: { duration: 0, redraw: false }
-                    }],
-                    label: 'Pause'
-                }]
-            }],
-    //         // Finally, add the slider and use `pad` to position it
-    //         // nicely next to the buttons.
-            sliders: [{
-                pad: { l: 130, t: 55 },
-                currentvalue: {
-                    visible: true,
-                    prefix: 'Year:',
-                    xanchor: 'right',
-                    font: { size: 20, color: '#666' }
-                },
-                steps: sliderSteps
-            }]
-        };
-
-        // Create the plot:
-        Plotly.plot('plot', {
-            data: traces,
-            layout: layout,
-            config: { showSendToCloud: true },
-            frames: frames,
+    // Create the main traces, one for each region:
+    var traces = [];
+    for (i = 0; i < regions.length; i++) {
+        var data = firstYear[regions[i]];
+        // One small note. We're creating a single trace here, to which
+        // the frames will pass data for the different Years. It's
+        // subtle, but to avoid data reference problems, we'll slice 
+        // the arrays to ensure we never write any new data into our
+        // lookup table:
+        traces.push({
+            name: regions[i],
+            x: data.x.slice(),
+            y: data.y.slice(),
+            id: data.id.slice(),
+            text: data.text.slice(),
+            mode: 'markers',
+            marker: {
+                size: data.marker.size.slice(),
+                sizemode: 'area',
+                sizeref: 200000
+            }
         });
+    }
+
+    // Create a frame for each Year. Frames are effectively just
+    // traces, except they don't need to contain the *full* trace
+    // definition (for example, appearance). The frames just need
+    // the parts the traces that change (here, the data).
+    var frames = [];
+    for (i = 0; i < Years.length; i++) {
+        frames.push({
+            name: Years[i],
+            data: regions.map(function (region) {
+                return getData(Years[i], region);
+            })
+        });
+    }
+
+    // Now create slider steps, one for each frame. The slider
+    // executes a plotly.js API command (here, Plotly.animate).
+    // In this example, we'll animate to one of the named frames
+    // created in the above loop.
+    var sliderSteps = [];
+    for (i = 0; i < Years.length; i++) {
+        sliderSteps.push({
+            method: 'animate',
+            label: Years[i],
+            args: [[Years[i]], {
+                mode: 'immediate',
+                transition: { duration: 300 },
+                frame: { duration: 300, redraw: false },
+            }]
+        });
+    }
+
+    var layout = {
+        xaxis: {
+            title: 'Life Expectancy',
+            range: [30, 85]
+        },
+        yaxis: {
+            title: 'GDP per Capita',
+            type: 'log'
+        },
+        hovermode: 'closest',
+        //         // We'll use updatemenus (whose functionality includes menus as
+        //         // well as buttons) to create a play button and a pause button.
+        //         // The play button works by passing `null`, which indicates that
+        //         // Plotly should animate all frames. The pause button works by
+        //         // passing `[null]`, which indicates we'd like to interrupt any
+        //         // currently running animations with a new list of frames. Here
+        //         // The new list of frames is empty, so it halts the animation.
+        updatemenus: [{
+            x: 0,
+            y: 0,
+            yanchor: 'top',
+            xanchor: 'left',
+            showactive: false,
+            direction: 'left',
+            type: 'buttons',
+            pad: { t: 87, r: 10 },
+            buttons: [{
+                method: 'animate',
+                args: [null, {
+                    mode: 'immediate',
+                    fromcurrent: true,
+                    transition: { duration: 300 },
+                    frame: { duration: 500, redraw: false }
+                }],
+                label: 'Play'
+            }, {
+                method: 'animate',
+                args: [[null], {
+                    mode: 'immediate',
+                    transition: { duration: 0 },
+                    frame: { duration: 0, redraw: false }
+                }],
+                label: 'Pause'
+            }]
+        }],
+        //         // Finally, add the slider and use `pad` to position it
+        //         // nicely next to the buttons.
+        sliders: [{
+            pad: { l: 130, t: 55 },
+            currentvalue: {
+                visible: true,
+                prefix: 'Year:',
+                xanchor: 'right',
+                font: { size: 20, color: '#666' }
+            },
+            steps: sliderSteps
+        }]
+    };
+
+    // Create the box plot:
+    var xData = ['Asia', 'Europe',
+        'Africa', 'Americas',
+        'Oceania'];
+
+    // function getrandom(num, mul) {
+    //     var value = [];
+    //     for (i = 0; i <= num; i++) {
+    //         var rand = Math.random() * mul;
+    //         value.push(rand);
+    //     }
+    //     return value;
+    // }
+
+    var yData = [];
+    // Go through each row, get the right trace, and append the data:
+    for (var i = 0; i < data.length; i++) {
+        var datum = data[i];
+        var trace = getData(datum.Year == 2015, datum.region);
+        trace.text.push(datum.Country);
+        trace.id.push(datum.Country);
+        trace.x.push(datum.Life_Expectancy);
+        trace.y.push(datum.GDP);
+        trace.marker.size.push(datum.Population);
+    }
+
+
+
+
+    var colors = ['rgba(93, 164, 214, 0.5)', 'rgba(255, 144, 14, 0.5)', 'rgba(44, 160, 101, 0.5)', 'rgba(255, 65, 54, 0.5)', 'rgba(207, 114, 255, 0.5)', 'rgba(127, 96, 0, 0.5)', 'rgba(255, 140, 184, 0.5)', 'rgba(79, 90, 117, 0.5)', 'rgba(222, 223, 0, 0.5)'];
+
+    var data_box = [];
+
+    for (var i = 0; i < xData.length; i++) {
+        var result = {
+            type: 'box',
+            y: yData[i],
+            name: xData[i],
+            boxpoints: 'all',
+            jitter: 0.5,
+            whiskerwidth: 0.2,
+            fillcolor: 'cls',
+            marker: {
+                size: 2
+            },
+            line: {
+                width: 1
+            }
+        };
+        data_box.push(result);
+    };
+
+    layout_box = {
+        title: 'Average life expectancy across the continents for 2015',
+        yaxis: {
+            autorange: true,
+            showgrid: true,
+            zeroline: true,
+            dtick: 5,
+            gridcolor: 'rgb(255, 255, 255)',
+            gridwidth: 1,
+            zerolinecolor: 'rgb(255, 255, 255)',
+            zerolinewidth: 2
+        },
+        margin: {
+            l: 40,
+            r: 30,
+            b: 80,
+            t: 100
+        },
+        paper_bgcolor: 'rgb(243, 243, 243)',
+        plot_bgcolor: 'rgb(243, 243, 243)',
+        showlegend: false
+    };
+
+    Plotly.newPlot('box_plot_continent', data_box, layout_box);
+
+
+
+    // Create the plot:
+    Plotly.plot('bubble_plot_country', {
+        data: traces,
+        layout: layout,
+        config: { showSendToCloud: true },
+        frames: frames,
+    });
 });
