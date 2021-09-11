@@ -1,6 +1,6 @@
 // gapminder code from plotly example - https://plotly.com/javascript/gapminder-example/
 
-d3.csv('https://raw.githubusercontent.com/nithiyasuresh/LifeExpectancy_Project/nithiyaBranch/pet_pals/data/Life.csv').then(function (data) {
+d3.csv('https://raw.githubusercontent.com/nithiyasuresh/life_exp/main/life_exp/data/Life.csv').then(function (data) {
     console.log(data);
     // Create a lookup table to sort and regroup the columns of data,
     // first by Year, then by region:
@@ -15,8 +15,8 @@ d3.csv('https://raw.githubusercontent.com/nithiyasuresh/LifeExpectancy_Project/n
         // then create one:
         if (!(trace = byYear[region])) {
             trace = byYear[region] = {
-                yr:[],
-                rgn:[],
+                yr: [],
+                rgn: [],
                 x: [],
                 y: [],
                 id: [],
@@ -24,7 +24,7 @@ d3.csv('https://raw.githubusercontent.com/nithiyasuresh/LifeExpectancy_Project/n
                 marker: { size: [] }
             };
         }
-        console.log(trace);
+        // console.log(trace);
         return trace;
     }
 
@@ -162,84 +162,6 @@ d3.csv('https://raw.githubusercontent.com/nithiyasuresh/LifeExpectancy_Project/n
         }]
     };
 
-    // Create the box plot:
-    var xData = ['Asia', 'Europe',
-        'Africa', 'Americas',
-        'Oceania'];
-
-    // function getrandom(num, mul) {
-    //     var value = [];
-    //     for (i = 0; i <= num; i++) {
-    //         var rand = Math.random() * mul;
-    //         value.push(rand);
-    //     }
-    //     return value;
-    // }
-
-    var yData = [];
-    // Go through each row, get the right trace, and append the data:
-    for (var i = 0; i < data.length; i++) {
-        var datum = data[i];
-        var trace = getData(datum.Year == 2015, datum.region);
-        trace.text.push(datum.Country);
-        trace.id.push(datum.Country);
-        trace.x.push(datum.Life_Expectancy);
-        trace.y.push(datum.GDP);
-        trace.marker.size.push(datum.Population);
-    }
-
-
-
-
-    var colors = ['rgba(93, 164, 214, 0.5)', 'rgba(255, 144, 14, 0.5)', 'rgba(44, 160, 101, 0.5)', 'rgba(255, 65, 54, 0.5)', 'rgba(207, 114, 255, 0.5)', 'rgba(127, 96, 0, 0.5)', 'rgba(255, 140, 184, 0.5)', 'rgba(79, 90, 117, 0.5)', 'rgba(222, 223, 0, 0.5)'];
-
-    var data_box = [];
-
-    for (var i = 0; i < xData.length; i++) {
-        var result = {
-            type: 'box',
-            y: yData[i],
-            name: xData[i],
-            boxpoints: 'all',
-            jitter: 0.5,
-            whiskerwidth: 0.2,
-            fillcolor: 'cls',
-            marker: {
-                size: 2
-            },
-            line: {
-                width: 1
-            }
-        };
-        data_box.push(result);
-    };
-
-    layout_box = {
-        title: 'Average life expectancy across the continents for 2015',
-        yaxis: {
-            autorange: true,
-            showgrid: true,
-            zeroline: true,
-            dtick: 5,
-            gridcolor: 'rgb(255, 255, 255)',
-            gridwidth: 1,
-            zerolinecolor: 'rgb(255, 255, 255)',
-            zerolinewidth: 2
-        },
-        margin: {
-            l: 40,
-            r: 30,
-            b: 80,
-            t: 100
-        },
-        paper_bgcolor: 'rgb(243, 243, 243)',
-        plot_bgcolor: 'rgb(243, 243, 243)',
-        showlegend: false
-    };
-
-    Plotly.newPlot('box_plot_continent', data_box, layout_box);
-
-
 
     // Create the plot:
     Plotly.plot('bubble_plot_country', {
@@ -248,4 +170,34 @@ d3.csv('https://raw.githubusercontent.com/nithiyasuresh/LifeExpectancy_Project/n
         config: { showSendToCloud: true },
         frames: frames,
     });
+
+});
+
+// 3rd visualisation - world map
+
+d3.csv('https://raw.githubusercontent.com/nithiyasuresh/life_exp/main/life_exp/data/Life_2015.csv').then (function(rows) {
+      function unpack(rows, key) {
+          return rows.map(function(row) { return row[key]; });
+      }
+
+    var data_map = [{
+        type: 'choropleth',
+        locationmode: 'country names',
+        locations: unpack(rows, 'Country'),
+        z: unpack(rows, 'Life_Expectancy'),
+        text: unpack(rows, 'Country'),
+        autocolorscale: true
+    }];
+
+    var layout_map = {
+      title: 'Life Expectancy for 2015 across the world',
+      geo: {
+          projection: {
+              type: 'robinson'
+          }
+      }
+    };
+
+    Plotly.newPlot("choropleth", data_map, layout_map, {showLink: false});
+
 });

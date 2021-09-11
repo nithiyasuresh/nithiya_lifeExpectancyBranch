@@ -7,6 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Pet Pals!</title>
     <link rel="stylesheet" href="./static/css/style.css">
+    <link rel="stylesheet" href="./static/css/mycss.css">
 </head>
 
 <body>
@@ -17,21 +18,32 @@
         </div>
 
         <div class="row">
-            <!-- Bubble chart thats continents average -->
+
+            <!-- Choropleth chart in a world map -->
+
             <div class="col-md-12">
-                <h2>Box Plot of Countries - Life Expectancy</h2>
-                <div id="box_plot_continent"></div>
+                <h2>World Map view</h2>
+                <h6 class="title">Life expectancy by country</h6>
+                <div id="choropleth"></div>
             </div>
 
-            <!-- Bubble chart that is country average -->
+            <!-- Box plot with continents -->
+            <div class="col-lg-7">
+                <div class="box">
+                    <h2 class="title">Life Expectancy by continent</h2>
+                    <img src="./static/Images/RegionBoxplot.png" alt="Box Plot of Regions">
+                </div>
+            </div>
+
+            <!-- Bubble chart that is country -->
 
             <div class="col-md-12">
-                <h2>Bubble Chart of Country - Life Expectancy Vs GDP</h2>
+                <h2>Life Expectancy Vs GDP by country</h2>
                 <div id="bubble_plot_country"></div>
             </div>
 
         </div>
-        
+
 
         <div class="row">
             <div class="col-md-12">
